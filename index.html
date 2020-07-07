@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <title>Previsão do tempo</title>
+
+    <style>
+        .imagem{
+            width: 20%;
+        }
+    </style>
+
+</head>
+<body>
+
+    <div class="container">
+        <div class="row mt-5 text-center">
+            <select class="form-control col-6 m-auto" id="cidade_box">
+                <option>Selecione uma cidade</option>
+                <option>Caxias</option>
+                <option>Passo Fundo</option>
+                <option>São Francisco de Paula</option>
+                <option>Porto Alegre</option>
+                <option>Rio Grande</option>
+                <option>Santa Cruz do Sul</option>
+                <option>Santa Maria</option>
+                <option>Santana do Livramento</option>
+                <option>Torres</option>
+                <option>Uruguaiana</option>
+            </select>
+            <button type="button" class="go form-control btn btn-primary col-3 m-auto">Go!</button>
+        </div>
+
+
+        <h1 id="cidade" class="text-center text-primary mt-4"></h1>
+        <br>
+
+        <div class="jumbotron text-center">
+            <h2>Hoje:</h2>
+            <h2 id="data_hoje"></h2>
+            <h2 id="temp_hoje"></h2>
+            <h2 id="condicao_hoje"></h2>
+            <div id="d"></div>
+            <br>
+        </div>
+
+        <div class="text-center">
+            <h1 class="text-success">Próximos dias:</h1>
+            <hr>
+            
+            <h2 id="proximos_dias"></h2>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.0.js" integrity="sha256-r/AaFHrszJtwpe+tHyNi/XCfMxYpbsRg2Uqn0x3s2zc=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+
+</body>
+</html>
+
+
+<script>
+
+    $('.go').click(function() {
+
+        const cidade = $('#cidade_box option:selected').text()
+        
+        if(cidade === 'Selecione uma cidade'){
+            alert('Selecione uma cidade!')
+            return
+        }
+
+        $.ajax({
+            url:`https://cors-anywhere.herokuapp.com/https://api.hgbrasil.com/weather?key=2634eca5&city_name=${cidade},RS`,
+            type: 'GET',
+            dataType: 'json',
+            success: function(resp){
+                const dados = resp.results.forecast
+
+                $('#cidade').html('Previsão do tempo em: '+resp.results.city.replace(',',' - '))
+                $('#data_hoje').html('Data: '+resp.results.date)
+                $('#temp_hoje').html('Temperatura agora: '+resp.results.temp).append('°')
+                $('#condicao_hoje').html('Situação: '+resp.results.description)
+
+                $('#proximos_dias').html('')
+                
+                for (i in dados){
+                    if(dados[i]['description'] === 'Ensolarado' || dados[i]['description'] === 'Tempo limpo' || dados[i]['description'] === 'Ensolarado com muitas nuvens' || dados[i]['description'] === 'Sol com poucas nuvens'){
+                        $('#proximos_dias').append('<img class="imagem" src="./img/sol.png">').append('<br>')
+
+                    }else if(dados[i]['description'] === 'Neblina' || dados[i]['description'] === 'Tempo nublado' || dados[i]['description'] === 'Parcialmente nublado' || dados[i]['description'] === 'Trovoadas dispersas'){
+                        $('#proximos_dias').append('<img class="imagem" src="./img/nublado.png">').append('<br>')
+                    }
+
+                    else if(dados[i]['description'] === 'Chuviscos' || dados[i]['description'] === 'Alguns chuviscos' || dados[i]['description'] === 'Chuvas esparsas' || dados[i]['description'] === 'Chuva'){
+                        $('#proximos_dias').append('<img class="imagem" src="./img/chuva.png">').append('<br>')
+                    }
+
+                    else if(dados[i]['description'] === 'Tempestade forte' || dados[i]['description'] === 'Tempestades severas' || dados[i]['description'] === 'Tempestades' || dados[i]['description'] === 'Granizo' || dados[i]['description'] === 'Misto chuva e granizo' || dados[i]['description'] === 'Tempestades isoladas'){
+                        $('#proximos_dias').append('<img class="imagem" src="./img/rain.png">').append('<br>')
+                    }
+
+                    $('#proximos_dias')
+                    .append('Data: '+ dados[i]['date'] +' - '+ dados[i]['weekday'])
+                    .append('<br>')
+                    .append('Mínima: '+ dados[i]['min']).append('°')
+                    .append('<br>')
+                    .append('Máxima: '+ dados[i]['max']).append('°')
+                    .append('<br>')
+                    .append('Situação: '+ dados[i]['description'])
+                    .append('<br>')
+                    .append('<hr>')
+                }
+
+            },
+            error: function(resp){
+                console.log(resp)
+                alert('Houve um erro ao buscar os dados')
+            }
+        })
+    });
+</script>
+
+<!--<script>
+    $(document).ready(function(){
+        carregar('estado')
+            function carregar(id, cidade_id){
+                var html = ''
+
+                $.getJSON('https://gist.githubusercontent.com/letanure/3012978/raw/2e43be5f86eef95b915c1c804ccc86dc9790a50a/estados-cidades.json',function(data){
+                   console.log(data)
+                    if(id == 'estado'){
+                        for(let i=0;i<data.estados.length;i++){
+                            html += '<option value='+data.estados[i].sigla+'>'+data.estados[i].nome+'</option>'
+                        }
+                    }else{
+                        for(let i=0;i<data.estados.length;i++){
+                            if(data.estados[i].sigla == cidade_id) {
+                                for(let j=0;j<data.estados[i].cidades.length;j++){
+                                    html += '<option value='+data.estados[i].sigla+'>'+data.estados[i].cidades[j]+'</option>'
+                                }
+                            }
+                        }
+                    }
+
+                    $('#'+id).html(html)
+                })
+            }
+
+
+            $(document).on('change','#estado',function(){
+                var cidade_id = $(this).val()
+                if(cidade_id != null){
+                    carregar('cidade',cidade_id)
+                }
+            })
+    })
+
+
+</script>-->
