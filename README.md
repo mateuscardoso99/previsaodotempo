@@ -1,5 +1,5 @@
 # previsaodotempo
-Website desenvolvido utilizando HTML, CSS, Bootsprap 4 e JavaScript,
+Website desenvolvido utilizando HTML, CSS, Bootsprap 4 e JavaScript, acessível em: https://mateuz1234.github.io/previsaodotempo
 API de previsão do tempo utilizada: https://hgbrasil.com/status/weather, 
 no plano gratuito são permitidas no máximo 2500 requisições por dia e no máximo 10 cidades diferentes
 
