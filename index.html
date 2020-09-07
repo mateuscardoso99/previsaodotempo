@@ -46,6 +46,7 @@
                 <h2 id="condicao_hoje"></h2>
                 <div id="d"></div>
                 <br>
+                <div style="display: none;" class="spinner-border text-primary spinner" role="status"></div>
             </div>
 
             <div class="text-center">
@@ -67,6 +68,9 @@
             return
         }
 
+        const spinner_button = document.querySelector('.spinner')
+        spinner_button.style.display = "inline-block"
+
         const proximos_dias = document.querySelector('#proximos_dias')
         const nome_cidade = document.querySelector('#cidade')
         const data_hoje = document.querySelector('#data_hoje')
@@ -81,6 +85,8 @@
         if(request.status === 200){
             const response = await request.json()
             const dados = response ? response.results.forecast : null
+
+            spinner_button.style.display = "none"
 
             nome_cidade.innerHTML = response.results.city.replace(',',' - ')
             data_hoje.innerHTML = 'Data: '+response.results.date
