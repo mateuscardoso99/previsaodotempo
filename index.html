@@ -1,73 +1,135 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-    <title>Previsão do tempo</title>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+        <title>Previsão do tempo no Rio Grande!</title>
 
-    <style>
-        .imagem{
-            width: 20%;
-        }
-        @media (max-width:400px){
-            #cidade_box{
-                font-size: 0.9em;
+        <style>
+            .imagem{
+                width: 20%;
             }
-        }
-    </style>
+            @media (max-width:400px){
+                #cidade_box{
+                    font-size: 0.9rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row mt-5 text-center">
+                <select class="form-control col-6 m-auto" id="cidade_box">
+                    <option>Selecione uma cidade</option>
+                    <option>Caxias</option>
+                    <option>Passo Fundo</option>
+                    <option>Pelotas</option>
+                    <option>Porto Alegre</option>
+                    <option>Rio Grande</option>
+                    <option>Santa Cruz do Sul</option>
+                    <option>Santa Maria</option>
+                    <option>Santana do Livramento</option>
+                    <option>Torres</option>
+                    <option>Uruguaiana</option>
+                </select>
+                <button type="button" class="go form-control btn btn-primary col-3 m-auto" onclick="getPrevisao()">Buscar!</button>
+            </div>
 
-</head>
-<body>
-
-    <div class="container">
-        <div class="row mt-5 text-center">
-            <select class="form-control col-6 m-auto" id="cidade_box">
-                <option>Selecione uma cidade</option>
-                <option>Caxias</option>
-                <option>Passo Fundo</option>
-                <option>Pelotas</option>
-                <option>Porto Alegre</option>
-                <option>Rio Grande</option>
-                <option>Santa Cruz do Sul</option>
-                <option>Santa Maria</option>
-                <option>Santana do Livramento</option>
-                <option>Torres</option>
-                <option>Uruguaiana</option>
-            </select>
-            <button type="button" class="go form-control btn btn-primary col-3 m-auto">Go!</button>
-        </div>
-
-
-        <h1 id="cidade" class="text-center text-primary mt-4"></h1>
-        <br>
-
-        <div class="jumbotron text-center">
-            <h2>Hoje:</h2>
-            <h2 id="data_hoje"></h2>
-            <h2 id="temp_hoje"></h2>
-            <h2 id="condicao_hoje"></h2>
-            <div id="d"></div>
+            <h1 id="cidade" class="text-center text-primary mt-4"></h1>
             <br>
+
+            <div class="jumbotron text-center">
+                <h2>Hoje:</h2>
+                <h2 id="data_hoje"></h2>
+                <h2 id="temp_hoje"></h2>
+                <h2 id="condicao_hoje"></h2>
+                <div id="d"></div>
+                <br>
+            </div>
+
+            <div class="text-center">
+                <h1 class="text-success">Próximos dias:</h1>
+                <hr>
+                <h2 id="proximos_dias"></h2>
+            </div>
         </div>
-
-        <div class="text-center">
-            <h1 class="text-success">Próximos dias:</h1>
-            <hr>
-            
-            <h2 id="proximos_dias"></h2>
-        </div>
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.5.0.js" integrity="sha256-r/AaFHrszJtwpe+tHyNi/XCfMxYpbsRg2Uqn0x3s2zc=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
-
-</body>
+    </body>
 </html>
 
-
 <script>
+    async function getPrevisao(){
+        const combobox = document.querySelector('#cidade_box')
+        const cidade = combobox.options[combobox.selectedIndex].text
+
+        if(cidade === 'Selecione uma cidade'){
+            alert('Selecione uma cidade!')
+            return
+        }
+
+        const proximos_dias = document.querySelector('#proximos_dias')
+        const nome_cidade = document.querySelector('#cidade')
+        const data_hoje = document.querySelector('#data_hoje')
+        const temp_hoje = document.querySelector('#temp_hoje')
+        const condicao_hoje = document.querySelector('#condicao_hoje')
+
+        const img = document.createElement('img')
+        img.classList.add('imagem')
+
+        const request = await fetch(`https://api.hgbrasil.com/weather?format=json-cors&key=1ee67919&city_name=${cidade},RS`)
+
+        if(request.status === 200){
+            const response = await request.json()
+            const dados = response ? response.results.forecast : null
+
+            nome_cidade.innerHTML = response.results.city.replace(',',' - ')
+            data_hoje.innerHTML = 'Data: '+response.results.date
+            temp_hoje.innerHTML = 'Temperatura agora: '+response.results.temp + '°'
+            condicao_hoje.innerHTML = 'Situação: '+response.results.description
+
+            for (i in dados){
+                if(dados[i]['description'] === 'Ensolarado' || dados[i]['description'] === 'Tempo limpo' || dados[i]['description'] === 'Ensolarado com muitas nuvens' || dados[i]['description'] === 'Sol com poucas nuvens')
+                {
+                        img.src = "./img/sol.png";
+                        proximos_dias.appendChild(img)
+
+                }
+
+                else if(dados[i]['description'] === 'Neblina' || dados[i]['description'] === 'Tempo nublado' || dados[i]['description'] === 'Parcialmente nublado' || dados[i]['description'] === 'Trovoadas dispersas')
+                {
+                        img.src = "./img/nublado.png";
+                        proximos_dias.appendChild(img)
+                }
+
+                else if(dados[i]['description'] === 'Chuviscos' || dados[i]['description'] === 'Alguns chuviscos' || dados[i]['description'] === 'Chuvas esparsas' || dados[i]['description'] === 'Chuva')
+                {
+                        img.src = "./img/chuva.png";
+                        proximos_dias.appendChild(img)
+                }
+
+                else if(dados[i]['description'] === 'Tempestade forte' || dados[i]['description'] === 'Tempestades severas' || dados[i]['description'] === 'Tempestades' || dados[i]['description'] === 'Granizo' || dados[i]['description'] === 'Misto chuva e granizo' || dados[i]['description'] === 'Tempestades isoladas')
+                {
+                        img.src = "./img/rain.png";
+                        proximos_dias.appendChild(img)
+                }
+
+                proximos_dias.innerHTML += '<br>'
+                proximos_dias.innerHTML += 'Data: '+ dados[i]['date'] +' - '+ dados[i]['weekday']
+                proximos_dias.innerHTML += '<br>'
+                proximos_dias.innerHTML += 'Mínima: '+ dados[i]['min'] + '°'
+                proximos_dias.innerHTML += '<br>'
+                proximos_dias.innerHTML += 'Máxima: '+ dados[i]['max'] + '°'
+                proximos_dias.innerHTML += '<br>'
+                proximos_dias.innerHTML += 'Situação: '+ dados[i]['description']
+                proximos_dias.innerHTML += '<br>'
+                proximos_dias.innerHTML += '<hr>'
+            }
+        }
+    }
+</script>
+
+
+    <!-- //IMPLEMENTAÇÃO COM JQUERY
 
     $('.go').click(function() {
 
@@ -127,4 +189,4 @@
             }
         })
     });
-</script>
+-->
