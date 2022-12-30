@@ -3,12 +3,23 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-        <title>Previsão do tempo no Rio Grande!</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <title>Previsão do tempo para Santa Maria - RS</title>
+        <meta name="description" content="Saiba qual é a previsão do tempo para Santa Maria - RS. Confira se haverá previsão de chuva para Santa Maria - RS. Previsão do tempo Santa Maria">
+        <meta property="og:title" content="Previsão do tempo para Santa Maria - RS">
+        <meta name="og:description" content="Saiba qual é a previsão do tempo para Santa Maria - RS. Confira se haverá previsão de chuva para Santa Maria - RS">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://mateuscardoso99.github.io/previsaodotempo">
+        <meta property="og:locale" content="pt-br">
+        <meta name="robots" content="all">
 
         <style>
             .imagem{
                 width: 20%;
+                margin: auto;
+            }
+            .hidden{
+                display: none;
             }
             @media (max-width:400px){
                 #cidade_box{
@@ -17,125 +28,283 @@
             }
         </style>
     </head>
-    <body>
+    <body onload="getPrevisao()">
         <div class="container">
-            <div class="row mt-5 text-center">
-                <select class="form-control col-6 m-auto" id="cidade_box">
-                    <option>Selecione uma cidade</option>
-                    <option>Caxias</option>
-                    <option>Passo Fundo</option>
-                    <option>Pelotas</option>
-                    <option>Porto Alegre</option>
-                    <option>Rio Grande</option>
-                    <option>Santa Cruz do Sul</option>
-                    <option>Santa Maria</option>
-                    <option>Santana do Livramento</option>
-                    <option>Torres</option>
-                    <option>Uruguaiana</option>
-                </select>
-                <button type="button" class="go form-control btn btn-primary col-3 m-auto" onclick="getPrevisao()">Buscar!</button>
-            </div>
 
-            <h1 id="cidade" class="text-center text-primary mt-4"></h1>
+            <h1 class="text-center text-primary mt-4">Previsão do Tempo Santa Maria - RS</h1>
             <br>
 
-            <div class="jumbotron text-center">
+            <div class="row p-5 mb-4 bg-light rounded-3 text-center">
                 <h2>Hoje:</h2>
-                <h2 id="data_hoje"></h2>
-                <h2 id="temp_hoje"></h2>
-                <h2 id="condicao_hoje"></h2>
-                <div id="d"></div>
+                <h3 id="data_hoje"></h3>
+                <img id="img_hoje" class="imagem">
+                <h3 id="temp_hoje" class="text-dark"></h3>
+                <div class="d-flex align-items-center justify-content-center">
+                    <img src="./img/pingo.png">
+                    <span id="qtd_chuva"></span>
+                </div>
+                <h3 id="condicao_hoje"></h3>
                 <br>
-                <div style="display: none;" class="spinner-border text-primary spinner" role="status"></div>
+                <div id="spinner" class="spinner-border text-primary spinner m-auto" role="status"></div>
             </div>
 
             <div class="text-center">
-                <h1 class="text-success">Próximos dias:</h1>
+                <h2 class="text-success">Próximos dias:</h2>
                 <hr>
-                <h2 id="proximos_dias"></h2>
+                <div id="proximos_dias"></div>
+            </div>
+
+            <div id="error" class="row hidden text-center">
+                <h2 class="text-danger">Houve um erro ao buscar a previsão do tempo.</h2>
             </div>
         </div>
     </body>
 </html>
 
 <script>
+    const contWeatherConditions = {
+        "clearsky": 0,
+        "cloudy": 0,
+        "rain": 0,
+        "thunder": 0,
+        "snow": 0
+    }
+
+    const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sabado']
+
     async function getPrevisao(){
         const combobox = document.querySelector('#cidade_box')
-        const cidade = combobox.options[combobox.selectedIndex].text
 
-        if(cidade === 'Selecione uma cidade'){
-            alert('Selecione uma cidade!')
-            return
-        }
-
-        const spinner_button = document.querySelector('.spinner')
-        spinner_button.style.display = "inline-block"
+        const spinner = document.querySelector('#spinner')
 
         const proximos_dias = document.querySelector('#proximos_dias')
-        const nome_cidade = document.querySelector('#cidade')
         const data_hoje = document.querySelector('#data_hoje')
         const temp_hoje = document.querySelector('#temp_hoje')
         const condicao_hoje = document.querySelector('#condicao_hoje')
+        const qtd_chuva_hoje = document.querySelector('#qtd_chuva')
+        const img_hoje = document.querySelector('#img_hoje')
 
         proximos_dias.innerHTML = ''
-        nome_cidade.innerHTML = ''
         data_hoje.innerHTML = ''
         temp_hoje.innerHTML = ''
         condicao_hoje.innerHTML = ''
+        qtd_chuva_hoje.innerHTML = ''
 
-        const img = document.createElement('img')
-        img.classList.add('imagem')
 
-        const request = await fetch(`https://api.hgbrasil.com/weather?format=json-cors&key=1ee67919&city_name=${cidade},RS`)
-
-        if(request.status === 200){
+        try{
+            const request = await fetch('https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=-29.68417&lon=-53.80694')
             const response = await request.json()
-            const dados = response ? response.results.forecast : null
+            console.log(response)
 
-            spinner_button.style.display = "none"
+            let separar_by_days = [];
+            let x=[];
 
-            nome_cidade.innerHTML = response.results.city.replace(',',' - ')
-            data_hoje.innerHTML = 'Data: '+response.results.date
-            temp_hoje.innerHTML = 'Temperatura agora: '+response.results.temp + '°'
-            condicao_hoje.innerHTML = 'Situação: '+response.results.description
+            response.properties.timeseries.forEach(item => {
+                if(x.length==0)
+                    x.push(item)
+                else if(x[x.length -1].time.slice(0,10) != item.time.slice(0,10)){
+                    separar_by_days.push(x)
+                    x=[]
+                    x.push(item)
+                }
+                else{
+                    x.push(item)
+                }
+            })
 
-            for (i in dados){
-                if(dados[i]['description'] === 'Ensolarado' || dados[i]['description'] === 'Tempo limpo' || dados[i]['description'] === 'Ensolarado com muitas nuvens' || dados[i]['description'] === 'Sol com poucas nuvens')
-                {
-                        img.src = "./img/sol.png";
-                        proximos_dias.appendChild(img)
+            separar_by_days.push(x)
 
+            console.log(separar_by_days);
+
+            let qtd_chuva = 0;
+
+            separar_by_days[0].forEach(item => {
+                qtd_chuva += item.data.next_1_hours.details.precipitation_amount
+
+                if(item.data.next_1_hours.summary.symbol_code.includes("clearsky")){
+                    contWeatherConditions.clearsky++
+                }
+                else if(item.data.next_1_hours.summary.symbol_code.includes("cloudy")){
+                    contWeatherConditions.cloudy++
+                }
+                else if(item.data.next_1_hours.summary.symbol_code.includes("rain")){
+                    contWeatherConditions.rain++
+                }
+                else if(item.data.next_1_hours.summary.symbol_code.includes("snow")){
+                    contWeatherConditions.snow++
+                }
+                else if(item.data.next_1_hours.summary.symbol_code.includes("thunder")){
+                    contWeatherConditions.thunder++
                 }
 
-                else if(dados[i]['description'] === 'Neblina' || dados[i]['description'] === 'Tempo nublado' || dados[i]['description'] === 'Parcialmente nublado' || dados[i]['description'] === 'Trovoadas dispersas')
-                {
-                        img.src = "./img/nublado.png";
-                        proximos_dias.appendChild(img)
-                }
+            })
 
-                else if(dados[i]['description'] === 'Chuviscos' || dados[i]['description'] === 'Alguns chuviscos' || dados[i]['description'] === 'Chuvas esparsas' || dados[i]['description'] === 'Chuva')
-                {
-                        img.src = "./img/chuva.png";
-                        proximos_dias.appendChild(img)
-                }
+            qtd_chuva_hoje.innerHTML = `${qtd_chuva.toFixed(1)}mm`
+            temp_hoje.innerHTML = `${Math.round(separar_by_days[0][0].data.instant.details.air_temperature)}°`
+            data_hoje.innerHTML = `${new Date(separar_by_days[0][0].time).toLocaleDateString()}`
 
-                else if(dados[i]['description'] === 'Tempestade forte' || dados[i]['description'] === 'Tempestades severas' || dados[i]['description'] === 'Tempestades' || dados[i]['description'] === 'Granizo' || dados[i]['description'] === 'Misto chuva e granizo' || dados[i]['description'] === 'Tempestades isoladas')
-                {
-                        img.src = "./img/rain.png";
-                        proximos_dias.appendChild(img)
-                }
+            let maxOcorrencias = "clearsky"
+            let max = contWeatherConditions.clearsky
 
-                proximos_dias.innerHTML += '<br>'
-                proximos_dias.innerHTML += 'Data: '+ dados[i]['date'] +' - '+ dados[i]['weekday']
-                proximos_dias.innerHTML += '<br>'
-                proximos_dias.innerHTML += 'Mínima: '+ dados[i]['min'] + '°'
-                proximos_dias.innerHTML += '<br>'
-                proximos_dias.innerHTML += 'Máxima: '+ dados[i]['max'] + '°'
-                proximos_dias.innerHTML += '<br>'
-                proximos_dias.innerHTML += 'Situação: '+ dados[i]['description']
-                proximos_dias.innerHTML += '<br>'
-                proximos_dias.innerHTML += '<hr>'
+            for (let key in contWeatherConditions) {
+                if(contWeatherConditions[key] >= max){
+                    max = contWeatherConditions[key]
+                    maxOcorrencias = key
+                }
             }
+
+            if(maxOcorrencias == "clearsky"){
+                img_hoje.src = "./img/sol.png"
+                condicao_hoje.innerHTML = "Ensolarado"
+            }
+            else if(maxOcorrencias == "cloudy"){
+                img_hoje.src = "./img/nublado.png"
+                condicao_hoje.innerHTML = "Predominantemente nublado"
+            }
+            else if(maxOcorrencias == "rain"){
+                img_hoje.src = "./img/chuva.png"
+                condicao_hoje.innerHTML = "Chuva"
+            }
+            else if(maxOcorrencias == "thunder"){
+                img_hoje.src = "./img/chuvarada.png"
+                condicao_hoje.innerHTML = "Chuva com trovoadas"
+            }
+            else{
+                img_hoje.src = "./img/neve.png"
+                condicao_hoje.innerHTML = "Neve"
+            }
+
+            separar_by_days.splice(0,1)
+            
+            let dataDia
+            let minTemp, maxTemp
+
+            for(dados of separar_by_days){
+            
+                contWeatherConditions.clearsky = 0
+                contWeatherConditions.cloudy = 0
+                contWeatherConditions.rain = 0
+                contWeatherConditions.thunder = 0
+                contWeatherConditions.snow = 0
+                qtd_chuva = 0
+
+                minTemp = dados[0].data.instant.details.air_temperature
+                maxTemp = dados[0].data.instant.details.air_temperature
+
+                for(info of dados){
+                    dataDia = info.time
+
+                    if(info.data.next_1_hours){
+                        qtd_chuva += info.data.next_1_hours.details.precipitation_amount
+                    }
+                    else if(info.data.next_6_hours){
+                        qtd_chuva += info.data.next_6_hours.details.precipitation_amount
+                    }
+                    else{
+                        qtd_chuva += 0
+                    }
+
+                    if(info.data.instant.details.air_temperature < minTemp)
+                        minTemp = info.data.instant.details.air_temperature
+
+                    if(info.data.instant.details.air_temperature > maxTemp)
+                        maxTemp = info.data.instant.details.air_temperature
+
+                    if(info.data.next_1_hours){
+                        if(info.data.next_1_hours.summary.symbol_code.includes("clearsky")){
+                            contWeatherConditions.clearsky++
+                        }
+                        else if(info.data.next_1_hours.summary.symbol_code.includes("cloudy")){
+                            contWeatherConditions.cloudy++
+                        }
+                        else if(info.data.next_1_hours.summary.symbol_code.includes("rain")){
+                            contWeatherConditions.rain++
+                        }
+                        else if(info.data.next_1_hours.summary.symbol_code.includes("snow")){
+                            contWeatherConditions.snow++
+                        }
+                        else if(info.data.next_1_hours.summary.symbol_code.includes("thunder")){
+                            contWeatherConditions.thunder++
+                        }
+                    }
+
+                    else if(info.data.next_6_hours){
+                        if(info.data.next_6_hours.summary.symbol_code.includes("clearsky") 
+                            || info.data.next_6_hours.summary.symbol_code.includes("fair")){
+                            contWeatherConditions.clearsky++
+                        }
+                        else if(info.data.next_6_hours.summary.symbol_code.includes("cloudy")){
+                            contWeatherConditions.cloudy++
+                        }
+                        else if(info.data.next_6_hours.summary.symbol_code.includes("rain")){
+                            contWeatherConditions.rain++
+                        }
+                        else if(info.data.next_6_hours.summary.symbol_code.includes("snow")){
+                            contWeatherConditions.snow++
+                        }
+                        else if(info.data.next_6_hours.summary.symbol_code.includes("thunder")){
+                            contWeatherConditions.thunder++
+                        }
+                    }
+
+                }
+
+                const row = document.createElement('div')
+                row.classList.add('row')
+
+                const img = document.createElement('img')
+                img.classList.add('imagem')
+
+                let maxOcorrencias = "clearsky"
+                let max = contWeatherConditions.clearsky
+
+                for (let key in contWeatherConditions) {
+                    if(contWeatherConditions[key] >= max){
+                        max = contWeatherConditions[key]
+                        maxOcorrencias = key
+                    }
+                }
+
+                if(max != 0 && maxOcorrencias == "clearsky"){
+                    img.src = "./img/sol.png"
+                }
+                else if(maxOcorrencias == "cloudy"){
+                    img.src = "./img/nublado.png"
+                }
+                else if(maxOcorrencias == "rain"){
+                    img.src = "./img/chuva.png"
+                }
+                else if(maxOcorrencias == "thunder"){
+                    img.src = "./img/chuvarada.png"
+                }
+                else{
+                    img.src = "./img/neve.png"
+                }
+
+                dataDia = new Date(dataDia)
+
+                if(max != 0){
+                    row.innerHTML += `<h4>${days[dataDia.getDay()]}  - ${dataDia.toLocaleDateString()}</h4>`
+                    row.appendChild(img)
+                    row.innerHTML += `<p>
+                                        <span class='text-dark'>${Math.round(maxTemp)}°</span>
+                                        <span class='text-secondary'>${Math.round(minTemp)}°</span>
+                                    </p>`
+                    row.innerHTML += `<div class='mb-4 d-flex align-items-center justify-content-center'>
+                                        <img src="./img/pingo.png">
+                                        <span id='qtd_chuva'>${qtd_chuva.toFixed(1)}mm</span>
+                                    </div>`
+                    row.innerHTML += '<hr>'
+
+                    proximos_dias.appendChild(row)
+                }
+            }
+
+        } catch(error){
+            console.log(error)
+            document.querySelector("#error").classList.remove("hidden")
+        } finally{
+            spinner.classList.add("hidden")
         }
     }
 </script>
